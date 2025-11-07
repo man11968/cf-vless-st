@@ -15,7 +15,7 @@ v2rayN客户端的单节点路径设置代理ip，通过代理客户端路径传
 | 全局代理 |s5all=IPV4地址:端口|s5all=[IPV6地址]:端口 |s5all=域名:端口|socks5|
 | 全局代理 |httpall=IPV4地址:端口|httpall=[IPV6地址]:端口|httpall=域名:端口|http或者https|
 | 代理cf相关网站 |http=IPV4地址:端口|http=[IPV6地址]:端口|http=域名:端口|http或者https|
-| 代理cf相关网站 |http://IPV4地址:端口|http://[IPV6地址]:端口|http://域名:端口||http或者https|
+| 代理cf相关网站 |http://IPV4地址:端口|http://[IPV6地址]:端口|http://域名:端口|http或者https|
 | 代理cf相关网站 |socks5=IPV4地址:端口|socks5=[IPV6地址]:端口|socks5=域名:端口|socks5|
 | 代理cf相关网站 |socks5://IPV4地址:端口|socks5://[IPV6地址]:端口|socks5://域名:端口|socks5|
 | 代理cf相关网站 |pyip=IPV4地址:端口|pyip=[IPV6地址]:端口|pyip=域名:端口|proxyip|
