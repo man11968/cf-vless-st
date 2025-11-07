@@ -8,20 +8,20 @@
 ### 二、脚本特色
 1. 支持workers、pages、snippets部署，vless+ws+tls代理节点
 2. 支持pages部署：vless+ws+tls代理节点
-3. 极大的丰富了反代功能的使用
+3. 极大的丰富了反代功能的使用<br>
    （1）. 本程序预设：<br>
-      UUID=ef3dcc57-6689-48e4-b3f9-2a62d88c730a（强烈建议部署时更换）<br>
+        UUID=ef3dcc57-6689-48e4-b3f9-2a62d88c730a（强烈建议部署时更换）<br>
     (2). v2rayN客户端的单节点路径设置代理ip，通过代理客户端路径传递<br>
-      1、socks5或者http代理所有网站(即：全局代理),格式：s5all=xxx或者httpall=xxx,二者任选其一<br>
-      2、socks5代理cf相关的网站，非cf相关的网站走直连,格式：socks5=xxx或者socks5://xxx<br>
-      3、http代理cf相关的网站，非cf相关的网站走直连,格式：http=xxx或者http://xxx<br>
-      4、proxyip代理cf相关的网站，非cf相关的网站走直连,格式：pyip=xxx或者proxyip=xxx<br>
-      5、nat64代理cf相关的网站，非cf相关的网站走直连,格式：nat64pf=[2602:fc59:b0:64::]<br>
-      6、如果path路径不设置留空，cf相关的网站无法访问<br>
+        1、socks5或者http代理所有网站(即：全局代理),格式：s5all=xxx或者httpall=xxx,二者任选其一<br>
+        2、socks5代理cf相关的网站，非cf相关的网站走直连,格式：socks5=xxx或者socks5://xxx<br>
+        3、http代理cf相关的网站，非cf相关的网站走直连,格式：http=xxx或者http://xxx<br>
+        4、proxyip代理cf相关的网站，非cf相关的网站走直连,格式：pyip=xxx或者proxyip=xxx<br>
+        5、nat64代理cf相关的网站，非cf相关的网站走直连,格式：nat64pf=[2602:fc59:b0:64::]<br>
+        6、如果path路径不设置留空，cf相关的网站无法访问<br>
       以上六种任选其一即可<br>
     (2). 注意：<br>
-      1、workers、pages、snippets都可以部署，纯手搓443系6个端口节点vless+ws+tls<br>
-      2、snippets部署的，nat64及william的proxyip域名"不支持"<br>
+        1、workers、pages、snippets都可以部署，纯手搓443系6个端口节点vless+ws+tls<br>
+        2、snippets部署的，nat64及william的proxyip域名"不支持"<br>
 4. 纯手搓示意图（以v2rayN客户端为例）<br>
    ![这是图片](/image/手搓.png "vless")<br>
  -------------------------------------------------------------
