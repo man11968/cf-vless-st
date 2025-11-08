@@ -16,8 +16,8 @@ v2rayN客户端的单节点路径设置代理ip，通过代理客户端路径传
 |------|------|------|------|
 | socks5全局代理 |s5all=IPv4:port|s5all=[IPv6]:port |s5all=domain:port|
 | http或者https全局代理 |httpall=IPv4:port|httpall=[IPv6]:port|httpall=domain:port|
-| http或者https代理cf网站 |http=IPv4:port<br>`http://IPv4:port`|http=[IPv6]:port<br>http://[IPv6]:port|http=domain:port<br>`http://domain:port`|
 | socks5代理cf网站 |socks5=IPv4:port<br>socks5://IPv4:port|socks5=[IPv6]:port<br>socks5://[IPv6]:port|socks5=domain:port<br>socks5://domain:port|
+| http或者https代理cf网站 |http=IPv4:port<br>`http://IPv4:port`|http=[IPv6]:port<br>http://[IPv6]:port|http=domain:port<br>`http://domain:port`|
 | proxyip代理cf网站 |pyip=IPv4:port<br>proxyip=IPv4:port|pyip=[IPv6]:port<br>proxyip=[IPv6]:port|pyip=domain:port<br>proxyip=domain:port|
 | nat64代理cf网站 | |nat64pf=[2602:fc59:b0:64::]| |
 #### 注意
