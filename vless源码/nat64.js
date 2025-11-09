@@ -34,6 +34,7 @@ async function parseHostPort(hostSeg) {
         let txtData = txtRecords[0];
         if (txtData.startsWith('"') && txtData.endsWith('"')) txtData = txtData.slice(1, -1);
         const prefixes = txtData.replace(/\\010/g, ',').replace(/\n/g, ',').split(',').map(s => s.trim()).filter(Boolean);
+        console.log(william,'域名绑定的ProxyIP有:',prefixes);
         if (prefixes.length === 0) return null;
         return prefixes[Math.floor(Math.random() * prefixes.length)];
       } catch (error) {
@@ -192,8 +193,8 @@ async function createSocks5Connection(addrType, destHost, destPort, socks5Spec) 
   throw new Error(`SOCKS5 account failed`);
 }
 // Example usage:
-const res = await getNat64ProxyIP('ip.sb', '[2602:fc59:b0:64::]');
-console.log(res, "类型:", typeof res);
+//const res = await getNat64ProxyIP('ip.sb', '[2602:fc59:b0:64::]');
+//console.log(res, "类型:", typeof res);
 
 const result = await parseHostPort('kr.william.ccwu.cc');
-console.log(result, "类型:", typeof result);
+//console.log(result, "类型:", typeof result);
