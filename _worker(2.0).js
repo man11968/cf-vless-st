@@ -1,3 +1,18 @@
+/*
+纯手搓节点使用说明如下：
+    一、本程序预设：
+      FIXED_UUID=6965d115-0236-44fd-b0ca-eefa7872c98e（强烈建议部署时更换）
+    二、v2rayN客户端的单节点路径设置代理ip，通过代理客户端路径传递
+      1、socks5或者http代理所有网站(即：全局代理),格式：s5all=xxx或者httpall=xxx,二者任选其一
+      2、socks5代理cf相关的网站，非cf相关的网站走直连,格式：socks5=xxx或者socks5://xxx
+      3、http代理cf相关的网站，非cf相关的网站走直连,格式：http=xxx或者http://xxx
+      4、proxyip代理cf相关的网站，非cf相关的网站走直连,格式：pyip=xxx或者proxyip=xxx
+      5、如果path路径不设置留空，cf相关的网站无法访问
+      以上五种任选其一即可
+    注意：
+      1、workers、pages、snippets都可以部署，纯手搓443系6个端口节点vless+ws+tls
+      2、snippets部署的，william的proxyip域名"不支持"
+*/
 import { connect } from "cloudflare:sockets";
 const FIXED_UUID = "6965d115-0236-44fd-b0ca-eefa7872c98e";
 const MAX_PENDING = 2097152, KEEPALIVE = 15000, STALL_TIMEOUT = 8000, MAX_STALL = 12, MAX_RECONNECT = 24;
@@ -119,7 +134,7 @@ function handleConnection(ws, request) {
         }
         //speed.cloudflare.com
         if (host.includes(atob('c3BlZWQuY2xvdWRmbGFyZS5jb20='))) throw new Error('Access');
-        const sock = await createConnection(host, port, addressType);
+        const sock = await createConnection(addressType, host, port);
         await sock.opened;
         const w = sock.writable.getWriter();
         if (payload.length) await w.write(payload);
@@ -138,7 +153,7 @@ function handleConnection(ws, request) {
         if (!host) throw new Error(`address is empty, addressType is ${addressType}`);
         if (host.includes(atob('c3BlZWQuY2xvdWRmbGFyZS5jb20='))) throw new Error('Access');
         const port = (socks5Data[length] << 8) | socks5Data[length + 1];
-        const sock = await createConnection(host, port, addressType);
+        const sock = await createConnection(addressType, host, port);
         await sock.opened;
         const w = sock.writable.getWriter();
         const payload = socks5Data.slice(length + 4);
@@ -146,23 +161,26 @@ function handleConnection(ws, request) {
         return { socket: sock, writer: w, reader: sock.readable.getReader(), info: { host, port } };
     }
 
-    async function createConnection(host, port, addressType) {
-        let sock, 启用SOCKS5反代;
-        if (启用SOCKS5反代 == 'socks5') {
-            //sock = await socks5Connect(host, port, addressType);
-        } else if (启用SOCKS5反代 == 'http') {
-            //sock = await httpConnect(host, port);
+    async function createConnection(addressType, host, port) {
+        let sock;
+        const socksAllMatch = tempPath.match(/(http|s5)all\s*=\s*([^&]+(?:\d+)?)/i);
+        if (socksAllMatch != null && socksAllMatch[1] === 's5') {
+            sock = await socks5Connect(host, port, socksAllMatch[2], addressType);
+        } else if (socksAllMatch != null && socksAllMatch[1] === 'http') {
+            sock = await httpConnect(host, port, socksAllMatch[2]);
         } else {
             try {
                 sock = connect({ hostname: host, port });
                 await sock.opened;
             } catch {
                 const pyipMatch = tempPath.match(/p(?:rox)?yip\s*=\s*([^&]+(?:\d+)?)/i)?.[1];
-                if (启用SOCKS5反代 == 'socks5') {
-                    //sock = await socks5Connect(host, port, addressType);
-                } else if (启用SOCKS5反代 == 'http') {
-                    //sock = await httpConnect(host, port);
-                } else if(pyipMatch){
+                const socksMatch = tempPath.match(/socks5\s*(?:=|(?::\/\/))\s*([^&]+(?:\d+)?)/i)?.[1];
+                const httpMatch = tempPath.match(/http\s*(?:=|(?::\/\/))\s*([^&]+(?:\d+)?)/i)?.[1];
+                if (socksMatch) {
+                    sock = await socks5Connect(host, port, socksMatch, addressType);
+                } else if (httpMatch) {
+                    sock = await httpConnect(host, port, httpMatch);
+                } else if (pyipMatch) {
                     const [反代IP地址, 反代IP端口] = await 解析地址端口(pyipMatch);
                     try {
                         sock = connect({ hostname: 反代IP地址, port: 反代IP端口 });
@@ -711,6 +729,120 @@ async function 解析地址端口(hostSeg) {
         [host, port = 443] = hostSeg.split(/[:,;]/);
     }
     return [host, Number(port)];
+}
+
+async function socks5Connect(addressRemote, portRemote, socks5Spec, addressType = 3) {
+    const [latter, former] = socks5Spec.split(/@?([\d\[\]a-z.:]+(?::\d+)?)$/i);
+    let [username, password] = latter.split(':');
+    if (!password) { password = '' };
+    const [hostname, port] = await 解析地址端口(former);
+    const socket = connect({ hostname, port });
+    const writer = socket.writable.getWriter();
+    const reader = socket.readable.getReader();
+    const encoder = new TextEncoder();
+    // SOCKS5 握手: VER(5) + NMETHODS(2) + METHODS(0x00,0x02)
+    await writer.write(new Uint8Array([5, 2, 0, 2]));
+    let res = (await reader.read()).value;
+    if (res[0] !== 0x05 || res[1] === 0xff) return;
+    // 如果需要用户名密码认证
+    if (res[1] === 0x02) {
+        if (!username || !password) return;
+        await writer.write(new Uint8Array([1, username.length, ...encoder.encode(username), password.length, ...encoder.encode(password)]));
+        res = (await reader.read()).value;
+        if (res[0] !== 0x01 || res[1] !== 0x00) return;
+    }
+    // 构建目标地址 (ATYP + DST.ADDR)
+    const DSTADDR = addressType === 1 ? new Uint8Array([1, ...addressRemote.split('.').map(Number)])
+        : addressType === 3 ? new Uint8Array([3, addressRemote.length, ...encoder.encode(addressRemote)])
+            : new Uint8Array([4, ...addressRemote.split(':').flatMap(x => [parseInt(x.slice(0, 2), 16), parseInt(x.slice(2), 16)])]);
+
+    // 发送连接请求: VER(5) + CMD(1=CONNECT) + RSV(0) + DSTADDR + DST.PORT
+    await writer.write(new Uint8Array([5, 1, 0, ...DSTADDR, portRemote >> 8, portRemote & 0xff]));
+    res = (await reader.read()).value;
+    if (res[1] !== 0x00) return;
+    writer.releaseLock();
+    reader.releaseLock();
+    return socket;
+}
+
+async function httpConnect(addressRemote, portRemote, httpSpec) {
+    const [latter, former] = httpSpec.split(/@?([\d\[\]a-z.:]+(?::\d+)?)$/i);
+    let [username, password] = latter.split(':');
+    if (!password) { password = '' };
+    const [hostname, port] = await 解析地址端口(former);
+    const sock = await connect({
+        hostname: hostname,
+        port: port
+    });
+    let connectRequest = `CONNECT ${addressRemote}:${portRemote} HTTP/1.1\r\n`;
+    connectRequest += `Host: ${addressRemote}:${portRemote}\r\n`;
+    if (username && password) {
+        const authString = `${username}:${password}`;
+        const base64Auth = btoa(authString);
+        connectRequest += `Proxy-Authorization: Basic ${base64Auth}\r\n`;
+    }
+    connectRequest += `User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36\r\n`;
+    connectRequest += `Proxy-Connection: Keep-Alive\r\n`;
+    connectRequest += `Connection: Keep-Alive\r\n`;
+    connectRequest += `\r\n`;
+    try {
+        const writer = sock.writable.getWriter();
+        await writer.write(new TextEncoder().encode(connectRequest));
+        writer.releaseLock();
+    } catch (err) {
+        console.error('The HTTP CONNECT request failed to send:', err);
+        throw new Error(`The HTTP CONNECT request failed to send: ${err.message}`);
+    }
+    const reader = sock.readable.getReader();
+    let respText = '';
+    let connected = false;
+    let responseBuffer = new Uint8Array(0);
+    try {
+        while (true) {
+            const { value, done } = await reader.read();
+            if (done) {
+                console.error('HTTP proxy connection interrupted');
+                throw new Error('HTTP proxy connection interrupted');
+            }
+            const newBuffer = new Uint8Array(responseBuffer.length + value.length);
+            newBuffer.set(responseBuffer);
+            newBuffer.set(value, responseBuffer.length);
+            responseBuffer = newBuffer;
+            respText = new TextDecoder().decode(responseBuffer);
+            if (respText.includes('\r\n\r\n')) {
+                const headersEndPos = respText.indexOf('\r\n\r\n') + 4;
+                const headers = respText.substring(0, headersEndPos);
+                if (headers.startsWith('HTTP/1.1 200') || headers.startsWith('HTTP/1.0 200')) {
+                    connected = true;
+                    if (headersEndPos < responseBuffer.length) {
+                        const remainingData = responseBuffer.slice(headersEndPos);
+                        const dataStream = new ReadableStream({
+                            start(controller) {
+                                controller.enqueue(remainingData);
+                            }
+                        });
+                        const { readable, writable } = new TransformStream();
+                        dataStream.pipeTo(writable).catch(err => console.error('Error processing remaining data:', err));
+                        // @ts-ignore
+                        sock.readable = readable;
+                    }
+                } else {
+                    const errorMsg = `HTTP proxy connection failed: ${headers.split('\r\n')[0]}`;
+                    console.error(errorMsg);
+                    throw new Error(errorMsg);
+                }
+                break;
+            }
+        }
+    } catch (err) {
+        reader.releaseLock();
+        throw new Error(`Failed to process HTTP proxy response: ${err.message}`);
+    }
+    reader.releaseLock();
+    if (!connected) {
+        throw new Error('HTTP proxy connection failed: No successful response received');
+    }
+    return sock;
 }
 
 async function nginx() {

@@ -34,7 +34,7 @@ async function parseHostPort(hostSeg) {
         let txtData = txtRecords[0];
         if (txtData.startsWith('"') && txtData.endsWith('"')) txtData = txtData.slice(1, -1);
         const prefixes = txtData.replace(/\\010/g, ',').replace(/\n/g, ',').split(',').map(s => s.trim()).filter(Boolean);
-        console.log(william,'域名绑定的ProxyIP有:',prefixes);
+        console.log(william, '域名绑定的ProxyIP有:', prefixes);
         if (prefixes.length === 0) return null;
         return prefixes[Math.floor(Math.random() * prefixes.length)];
       } catch (error) {
@@ -191,6 +191,40 @@ async function createSocks5Connection(addrType, destHost, destPort, socks5Spec) 
   reader?.releaseLock();
   await socks5Conn?.close();
   throw new Error(`SOCKS5 account failed`);
+}
+
+async function socks5Connect(addressRemote, portRemote, socks5Spec, addressType = 3) {
+  const [latter, former] = socks5Spec.split(/@?([\d\[\]a-z.:]+(?::\d+)?)$/i);
+  let [username, password] = latter.split(':');
+  if (!password) { password = '' };
+  const [hostname, port] = await parseHostPort(former);
+  const socket = connect({ hostname, port });
+  const writer = socket.writable.getWriter();
+  const reader = socket.readable.getReader();
+  const encoder = new TextEncoder();
+  // SOCKS5 握手: VER(5) + NMETHODS(2) + METHODS(0x00,0x02)
+  await writer.write(new Uint8Array([5, 2, 0, 2]));
+  let res = (await reader.read()).value;
+  if (res[0] !== 0x05 || res[1] === 0xff) return;
+  // 如果需要用户名密码认证
+  if (res[1] === 0x02) {
+    if (!username || !password) return;
+    await writer.write(new Uint8Array([1, username.length, ...encoder.encode(username), password.length, ...encoder.encode(password)]));
+    res = (await reader.read()).value;
+    if (res[0] !== 0x01 || res[1] !== 0x00) return;
+  }
+  // 构建目标地址 (ATYP + DST.ADDR)
+  const DSTADDR = addressType === 1 ? new Uint8Array([1, ...addressRemote.split('.').map(Number)])
+    : addressType === 3 ? new Uint8Array([3, addressRemote.length, ...encoder.encode(addressRemote)])
+      : new Uint8Array([4, ...addressRemote.split(':').flatMap(x => [parseInt(x.slice(0, 2), 16), parseInt(x.slice(2), 16)])]);
+
+  // 发送连接请求: VER(5) + CMD(1=CONNECT) + RSV(0) + DSTADDR + DST.PORT
+  await writer.write(new Uint8Array([5, 1, 0, ...DSTADDR, portRemote >> 8, portRemote & 0xff]));
+  res = (await reader.read()).value;
+  if (res[1] !== 0x00) return;
+  writer.releaseLock();
+  reader.releaseLock();
+  return socket;
 }
 // Example usage:
 //const res = await getNat64ProxyIP('ip.sb', '[2602:fc59:b0:64::]');
