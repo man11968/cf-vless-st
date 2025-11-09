@@ -41,5 +41,8 @@ v2rayN客户端的单节点路径设置代理ip，通过代理客户端路径传
 
 2. 电脑Windows：[v2rayN](https://github.com/2dust/v2rayN/tags)、[Hiddify](https://github.com/hiddify/hiddify-next/tags)、[Karing](https://github.com/KaringX/karing/tags)
 -------------------------------------------------------------
+### 🛠 开源代码引用
+- [cmliu/edgetunnel/tree/beta2.0](https://github.com/cmliu/edgetunnel/tree/beta2.0)
+-------------------------------------------------------------
 ## 感谢您右上角加Star🌟
 [![Star History Chart](https://api.star-history.com/svg?repos=duquancai/cf-vless-st&type=Date)](https://www.star-history.com/#duquancai/cf-vless-st&Date)
