@@ -1,7 +1,7 @@
 /*
 纯手搓节点使用说明如下：
     一、本程序预设：
-      1、FIXED_UUID = "6965d115-0236-44fd-b0ca-eefa7872c98e"（强烈建议部署时更换）
+      1、FIXED_UUID = "6b225b49-b1e5-499b-8144-61f8baa759f5"（强烈建议部署时更换）
     二、v2rayN客户端的单节点路径设置代理ip，通过代理客户端路径传递
       1、socks5或者http代理所有网站(即：全局代理),格式：s5all=xxx或者httpall=xxx,二者任选其一
       2、socks5代理cf相关的网站，非cf相关的网站走直连,格式：socks5=xxx或者socks5://xxx
@@ -14,7 +14,7 @@
       2、snippets部署的，william的proxyip域名"不支持"
 */
 import { connect } from "cloudflare:sockets";
-const FIXED_UUID = "6965d115-0236-44fd-b0ca-eefa7872c98e";
+const FIXED_UUID = "6b225b49-b1e5-499b-8144-61f8baa759f5";
 const MAX_PENDING = 2097152, KEEPALIVE = 15000, STALL_TIMEOUT = 8000, MAX_STALL = 12, MAX_RECONNECT = 24;
 
 export default {
